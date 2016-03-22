@@ -1128,9 +1128,10 @@ public class JSONObject {
      */
     public final JSONObject putOnce(String key, Object value) throws JSONException {
         if (key != null && value != null) {
-            if (opt(key) != null) {
-                throw new JSONException("Duplicate key \"" + key + "\"");
-            }
+            // No great way to quickly get config for this and unfortunately a must have for us, so turning it off :-(
+//            if (opt(key) != null) {
+//                throw new JSONException("Duplicate key \"" + key + "\"");
+//            }
             put(key, value);
         }
         return this;
