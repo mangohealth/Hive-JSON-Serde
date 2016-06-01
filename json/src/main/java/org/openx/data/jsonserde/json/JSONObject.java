@@ -1666,4 +1666,35 @@ public class JSONObject {
          }
      }
 
+    /**
+     * Creates a new JSONObject who collects all first level objects from this JSONObject whose
+     * entries whose keys start with the provided prefix.
+     * @param prefix
+     * @return
+     */
+    public JSONObject getKeysWithPrefix(String prefix) {
+        try {
+            JSONObject retVal = new JSONObject();
+            Iterator iter = this.map.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry entry = (Map.Entry) iter.next();
+                String key = entry.getKey().toString();
+                if(key.startsWith(prefix)) {
+                    Object value = entry.getValue();
+                    if (value == null || value == NULL) {
+                        // Let nulls remain explicit and not string encoded
+                        retVal.map.put(key, null);
+                    } else {
+                        retVal.map.put(key, value);
+                    }
+                }
+            }
+
+            return retVal;
+        }
+        catch(Throwable ex) {
+            throw new RuntimeException("Could not build prefix attributes col:  " + prefix, ex);
+        }
+    }
+
 }

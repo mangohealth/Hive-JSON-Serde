@@ -89,6 +89,9 @@ public class JsonSerDe implements SerDe {
     // aren't otherwise defined in the schema
     public static final String PROP_UNMAPPED_ATTR_KEY = "unmapped.attr.key";
 
+    // Allow first level object keys w/ a given prefix to get aggregated into a well formed table column
+    public static final String PROP_PREFIX_MAPPING_PREFIX = "unmapped.prefix.";
+
    JsonStructOIOptions options;
 
     /**
@@ -156,6 +159,8 @@ public class JsonSerDe implements SerDe {
                 .getProperty(PROP_ALLOW_DUPLICATE_KEYS, "false"));
 
         options.setUnmappedValuesFieldName(tbl.getProperty(PROP_UNMAPPED_ATTR_KEY));
+
+        options.setPrefixMappings(getPrefixMappings(tbl));
         
     }
 
@@ -458,6 +463,30 @@ public class JsonSerDe implements SerDe {
             }
         }
         return mps;
+    }
+
+    /**
+     * Creates mappings of column name to JSON key prefix to collect into that column.
+     * @param tbl
+     * @return
+     */
+    private Map<String, String> getPrefixMappings(Properties tbl) {
+        int configSuffixLen = PROP_PREFIX_MAPPING_PREFIX.length();
+        Map<String, String> retVal = new HashMap<String,String>();
+
+        for(Object entry: tbl.keySet()) {
+            if(entry instanceof String) {
+                String configKey = (String) entry;
+                if (configKey.startsWith(PROP_PREFIX_MAPPING_PREFIX)) {
+                    retVal.put(
+                        tbl.getProperty(configKey).toLowerCase(),
+                        configKey.substring(configSuffixLen)
+                    );
+                }
+            }
+        }
+
+        return retVal;
     }
 
 
