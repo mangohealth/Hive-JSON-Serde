@@ -31,6 +31,9 @@ public  class JsonStructOIOptions {
 
         boolean dotsInKeyNames = false;
         String unmappedValuesFieldName = null;
+
+        Map<String, String> prefixMappings = null;
+
         public Map<String, String> getMappings() {
             return mappings;
         }
@@ -45,6 +48,10 @@ public  class JsonStructOIOptions {
 
      public void setUnmappedValuesFieldName(String unmappedValuesFieldName) {
          this.unmappedValuesFieldName = unmappedValuesFieldName;
+     }
+
+     public void setPrefixMappings(Map<String, String> prefixMappings) {
+         this.prefixMappings = prefixMappings;
      }
 
      @Override

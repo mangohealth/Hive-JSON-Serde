@@ -1640,7 +1640,7 @@ public class JSONObject {
      * @param fieldNames
      * @return
      */
-     public JSONObject getNotTheseKeys(Set<String> fieldNames) {
+     public JSONObject getNotTheseKeys(Set<String> fieldNames, Collection<String> prefixes) {
          try {
              JSONObject retVal = new JSONObject();
              Iterator iter = this.map.entrySet().iterator();
@@ -1648,7 +1648,7 @@ public class JSONObject {
                  Map.Entry entry = (Map.Entry) iter.next();
                  String key = entry.getKey().toString();
                  Object value = entry.getValue();
-                 if (!fieldNames.contains(key)) {
+                 if (!fieldNames.contains(key) && !matchesPrefix(prefixes, key)) {
                      if(value == null || value == NULL) {
                          // Let nulls remain explicit and not string encoded
                          retVal.map.put(key, null);
@@ -1665,6 +1665,16 @@ public class JSONObject {
              throw new RuntimeException("Could not build unmapped attributes col", ex);
          }
      }
+
+    private boolean matchesPrefix(Collection<String> prefixes, String key) {
+        for(String prefix : prefixes) {
+            if(key.startsWith(prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Creates a new JSONObject who collects all first level objects from this JSONObject whose

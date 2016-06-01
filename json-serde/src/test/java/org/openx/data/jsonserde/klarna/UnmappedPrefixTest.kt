@@ -33,7 +33,7 @@ class UnmappedPrefixTest {
               listed2 INT,
               a MAP<STRING, INT>,
               b MAP<STRING, FLOAT>,
-              c MAP<STRING, STRING>,
+              c map<string, string>,
               d MAP<STRING, ARRAY<INT>>,
               e MAP<STRING, MAP<STRING, INT>>,
               f MAP<STRING, BOOLEAN>,
@@ -41,7 +41,8 @@ class UnmappedPrefixTest {
               h MAP<STRING, STRUCT<
                 h1:STRING,
                 h2:INT
-              >>
+              >>,
+              unmapped_cols MAP<STRING, STRING>
             )
             ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
             WITH SERDEPROPERTIES (
@@ -52,7 +53,8 @@ class UnmappedPrefixTest {
               "unmapped.prefix.e_" = "e",
               "unmapped.prefix.f_" = "f",
               "unmapped.prefix.g_" = "g",
-              "unmapped.prefix.h_" = "h"
+              "unmapped.prefix.h_" = "h",
+              "unmapped.attr.key" = "unmapped_cols"
             )
             LOCATION '${tmpDir.root.absolutePath}';
         """)
@@ -67,7 +69,7 @@ class UnmappedPrefixTest {
         val cols = results.first().split("\t")
         Assert.assertEquals("1", cols[0])
         Assert.assertEquals("2", cols[1])
-        Assert.assertEquals("""{"a_123":1}""", cols[2])
+        Assert.assertEquals("""{"a_456":2,"a_123":1,"a_789":3}""", cols[2])
         Assert.assertEquals("""{"b_123":1.1}""", cols[3])
         Assert.assertEquals("""{"c_123":"hello"}""", cols[4])
         Assert.assertEquals("""{"d_123":[1,2,3]}""", cols[5])
@@ -75,6 +77,7 @@ class UnmappedPrefixTest {
         Assert.assertEquals("""{"f_123":true}""", cols[7])
         Assert.assertEquals("""{"g_123":null}""", cols[8])
         Assert.assertEquals("""{"h_123":{"h1":"abc","h2":1}}""", cols[9])
+        Assert.assertEquals("""{"bob":"123","nancy":"\"hello\""}""", cols[10])
     }
 
 }
