@@ -130,7 +130,7 @@ public class JSONML {
 		        	}
 		        	tagName = (String)token;
 		            newja = new JSONArray();		
-		            newjo = new JSONObject();
+		            newjo = new JSONObject("ml");
 		        	if (arrayForm) {
 			            newja.put(tagName);
 			            if (ja != null) {

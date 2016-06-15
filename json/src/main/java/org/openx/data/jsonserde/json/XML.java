@@ -213,7 +213,7 @@ public class XML {
         } else {
             tagName = (String)token;
             token = null;
-            jsonobject = new JSONObject();
+            jsonobject = new JSONObject("xml");
             for (;;) {
                 if (token == null) {
                     token = x.nextToken();
@@ -363,7 +363,7 @@ public class XML {
      * @throws JSONException
      */
     public static JSONObject toJSONObject(String string) throws JSONException {
-        JSONObject jo = new JSONObject();
+        JSONObject jo = new JSONObject("xml");
         XMLTokener x = new XMLTokener(string);
         while (x.more() && x.skipPast("<")) {
             parse(x, jo, null);

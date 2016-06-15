@@ -146,12 +146,19 @@ public class JSONObject {
      */
     public static final Object NULL = new Null();
 
+    private String parent;
+
+
+    public String getParent() {
+        return parent;
+    }
 
     /**
      * Construct an empty JSONObject.
      */
-    public JSONObject() {
+    public JSONObject(String parent) {
         this.map = new HashMap();
+        this.parent = parent;
     }
 
 
@@ -162,8 +169,8 @@ public class JSONObject {
      * @param jo A JSONObject.
      * @param names An array of strings.
      */
-    public JSONObject(JSONObject jo, String[] names) {
-        this();
+    public JSONObject(JSONObject jo, String[] names, String parent) {
+        this(parent);
         for (int i = 0; i < names.length; i += 1) {
             try {
                 putOnce(names[i].toLowerCase(), jo.opt(names[i]), false);
@@ -179,8 +186,8 @@ public class JSONObject {
      * @throws JSONException If there is a syntax error in the source string
      *  or a duplicated key.
      */
-    public JSONObject(JSONTokener x) throws JSONException {
-        this();
+    public JSONObject(JSONTokener x, String parent) throws JSONException {
+        this(parent);
         char c;
         String key;
 
@@ -196,7 +203,7 @@ public class JSONObject {
                 return;
             default:
                 x.back();
-                key = x.nextValue().toString().toLowerCase();
+                key = x.nextValue("key").toString().toLowerCase();
             }
 
 // The key is followed by ':'. We will also tolerate '=' or '=>'.
@@ -209,7 +216,7 @@ public class JSONObject {
             } else if (c != ':') {
                 throw x.syntaxError("Expected a ':' after a key");
             }
-            putOnce(key, x.nextValue(), x.isAllowDuplicates());
+            putOnce(key, x.nextValue(key), x.isAllowDuplicates());
 
 // Pairs are separated by ','. We will also tolerate ';'.
 
@@ -236,7 +243,7 @@ public class JSONObject {
      * @param map A map object that can be used to initialize the contents of
      *  the JSONObject. 
      */
-    public JSONObject(Map map) {
+    public JSONObject(Map map, String parent) {
         this.map = new HashMap();
         if (map != null) {
             Iterator i = map.entrySet().iterator();
@@ -248,6 +255,7 @@ public class JSONObject {
                 }
             }
         }
+        this.parent = parent;
     }
 
 
@@ -270,8 +278,8 @@ public class JSONObject {
      * @param bean An object that has getter methods that should be used
      * to make a JSONObject.
      */
-    public JSONObject(Object bean) {
-        this();
+    public JSONObject(Object bean, String parent) {
+        this(parent);
         populateMap(bean);
     }
 
@@ -287,8 +295,8 @@ public class JSONObject {
      * @param names An array of strings, the names of the fields to be obtained
      * from the object.
      */
-    public JSONObject(Object object, String names[]) {
-        this();
+    public JSONObject(Object object, String names[], String parent) {
+        this(parent);
         Class c = object.getClass();
         for (int i = 0; i < names.length; i += 1) {
             String name = names[i];
@@ -309,8 +317,8 @@ public class JSONObject {
      * @exception JSONException If there is a syntax error in the source
      *  string or a duplicated key.
      */
-    public JSONObject(String source, boolean allowDuplicates) throws JSONException {
-        this(new JSONTokener(source, allowDuplicates));
+    public JSONObject(String source, boolean allowDuplicates, String parent) throws JSONException {
+        this(new JSONTokener(source, allowDuplicates), parent);
     }
 
 
@@ -320,8 +328,8 @@ public class JSONObject {
      * @param locale The Locale to load the ResourceBundle for.
      * @throws JSONException If any JSONExceptions are detected.
      */
-    public JSONObject(String baseName, Locale locale) throws JSONException {
-        this();
+    public JSONObject(String baseName, Locale locale, String parent) throws JSONException {
+        this(parent);
         ResourceBundle bundle = ResourceBundle.getBundle(baseName, locale, 
                 Thread.currentThread().getContextClassLoader());
 
@@ -343,7 +351,7 @@ public class JSONObject {
                     String segment = path[i];
                     JSONObject nextTarget = target.optJSONObject(segment);
                     if (nextTarget == null) {
-                        nextTarget = new JSONObject();
+                        nextTarget = new JSONObject("bundled");
                         target.put(segment.toLowerCase(), nextTarget);
                     }
                     target = nextTarget;
@@ -1083,7 +1091,7 @@ public class JSONObject {
      * @throws JSONException
      */
     public JSONObject put(String key, Map value) throws JSONException {
-        put(key, new JSONObject(value));
+        put(key, new JSONObject(value, key));
         return this;
     }
 
@@ -1472,7 +1480,7 @@ public class JSONObject {
             return value.toString();
         }
         if (value instanceof Map) {
-            return new JSONObject((Map)value).toString();
+            return new JSONObject((Map)value, "valueToString").toString();
         }
         if (value instanceof Collection) {
             return new JSONArray((Collection)value).toString();
@@ -1528,7 +1536,7 @@ public class JSONObject {
             return ((JSONArray)value).toString(indentFactor, indent);
         }
         if (value instanceof Map) {
-            return new JSONObject((Map)value).toString(indentFactor, indent);
+            return new JSONObject((Map)value, "valueToString").toString(indentFactor, indent);
         }
         if (value instanceof Collection) {
             return new JSONArray((Collection)value).toString(indentFactor, indent);
@@ -1574,7 +1582,7 @@ public class JSONObject {
                  return new JSONArray(object);
              }
              if (object instanceof Map) {
-                 return new JSONObject((Map)object);
+                 return new JSONObject((Map)object, "wrap");
              }
              Package objectPackage = object.getClass().getPackage();
              String objectPackageName = objectPackage != null ? 
@@ -1586,7 +1594,7 @@ public class JSONObject {
              ) {
                  return object.toString();
              }
-             return new JSONObject(object);
+             return new JSONObject(object, "wrap");
          } catch(JSONException exception) {
              return null;
          }
@@ -1642,7 +1650,7 @@ public class JSONObject {
      */
      public JSONObject getNotTheseKeys(Set<String> fieldNames, Collection<String> prefixes) {
          try {
-             JSONObject retVal = new JSONObject();
+             JSONObject retVal = new JSONObject("not-these-keys");
              Iterator iter = this.map.entrySet().iterator();
              while (iter.hasNext()) {
                  Map.Entry entry = (Map.Entry) iter.next();
@@ -1684,7 +1692,7 @@ public class JSONObject {
      */
     public JSONObject getKeysWithPrefix(String prefix) {
         try {
-            JSONObject retVal = new JSONObject();
+            JSONObject retVal = new JSONObject(prefix);
             Iterator iter = this.map.entrySet().iterator();
             while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();

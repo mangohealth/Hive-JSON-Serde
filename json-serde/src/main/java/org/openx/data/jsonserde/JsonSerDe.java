@@ -184,18 +184,18 @@ public class JsonSerDe implements SerDe {
             String txt = rowText.toString().trim();
             
             if(txt.startsWith("{")) {
-                jObj = new JSONObject(txt, allowDuplicates);
+                jObj = new JSONObject(txt, allowDuplicates, "deserialize-base");
             } else if (txt.startsWith("[")){
                 jObj = new JSONArray(txt, allowDuplicates);
             }
         } catch (JSONException e) {
             // If row is not a JSON object, make the whole row NULL
             onMalformedJson("Row is not a valid JSON Object - JSONException: "
-                    + e.getMessage());
+                    + e.getMessage(), rowText.toString().trim());
             try {
-                jObj = new JSONObject("{}", allowDuplicates);
+                jObj = new JSONObject("{}", allowDuplicates, "malformed");
             } catch (JSONException ex) {
-                onMalformedJson("Error parsing empty row. This should never happen.");
+                onMalformedJson("Error parsing empty row. This should never happen.", "");
             }
         }
 	
@@ -268,7 +268,7 @@ public class JsonSerDe implements SerDe {
             return null;
         }
 
-        JSONObject result = new JSONObject();
+        JSONObject result = new JSONObject("serialize-parent");
         
         List<? extends StructField> fields = soi.getAllStructFieldRefs();
         
@@ -409,7 +409,7 @@ public class JsonSerDe implements SerDe {
     private JSONObject serializeMap(Object obj, MapObjectInspector moi) {
         if (obj==null) { return null; }
         
-        JSONObject jo = new JSONObject();  
+        JSONObject jo = new JSONObject("serialize-map");
         Map m = moi.getMap(obj);
         
         for(Object k : m.keySet()) {
@@ -424,9 +424,10 @@ public class JsonSerDe implements SerDe {
         return jo;
     }
     
-    public void onMalformedJson(String msg) throws SerDeException {
+    public void onMalformedJson(String msg, String input) throws SerDeException {
         if(ignoreMalformedJson) {
-            LOG.warn("Ignoring malformed JSON: " + msg);
+            System.err.println("Ignoring malformed JSON: " + msg);
+            System.err.println("Which had this as input: " + input);
         }  else {
             throw new SerDeException(msg);
         }
