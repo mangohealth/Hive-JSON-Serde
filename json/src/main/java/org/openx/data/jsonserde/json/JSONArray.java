@@ -114,7 +114,7 @@ public class JSONArray {
 	                this.myArrayList.add(JSONObject.NULL);
 	            } else {
 	                x.back();
-	                this.myArrayList.add(x.nextValue(this.toString()));
+	                this.myArrayList.add(x.nextValue("array"));
 	            }
 	            switch (x.nextClean()) {
 	            case ';':
