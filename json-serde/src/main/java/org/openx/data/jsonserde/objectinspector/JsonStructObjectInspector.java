@@ -104,7 +104,10 @@ public class JsonStructObjectInspector extends StandardStructObjectInspector {
         
         try {
             if (fieldRef.getFieldName().equalsIgnoreCase(options.unmappedValuesFieldName)) {
-                fieldData = data.getNotTheseKeys(getJsonFieldNames());
+                fieldData = data.getNotTheseKeys(getJsonFieldNames(), options.prefixMappings.values());
+            }
+            else if (options.prefixMappings.containsKey(fieldRef.getFieldName())) {
+                fieldData = data.getKeysWithPrefix(options.prefixMappings.get(fieldRef.getFieldName()));
             }
             else if (data.has(getJsonField(fieldRef))) {
                fieldData = data.get(getJsonField(fieldRef));
@@ -159,10 +162,16 @@ public class JsonStructObjectInspector extends StandardStructObjectInspector {
         values.clear();
 
         int unmappedFieldPosition = -1;
+        Map<String, Integer> prefixFieldPositions = new HashMap<String, Integer>();
         for (int i = 0; i < fields.size(); i++) {
                 StructField field = fields.get(i);
                 if (field.getFieldName().equalsIgnoreCase(options.unmappedValuesFieldName)) {
                     unmappedFieldPosition = i;
+                    values.add(null);
+                }
+                else if (options.prefixMappings.containsKey(field.getFieldName())) {
+                    String fieldName = field.getFieldName();
+                    prefixFieldPositions.put(fieldName, i);
                     values.add(null);
                 }
                 else {
@@ -176,7 +185,17 @@ public class JsonStructObjectInspector extends StandardStructObjectInspector {
         }
 
         if(unmappedFieldPosition != -1) {
-            values.set(unmappedFieldPosition, jObj.getNotTheseKeys(getJsonFieldNames()));
+            values.set(
+                unmappedFieldPosition,
+                jObj.getNotTheseKeys(getJsonFieldNames(), options.prefixMappings.values())
+            );
+        }
+
+        for(Map.Entry<String, Integer> entry : prefixFieldPositions.entrySet()) {
+            values.set(
+                entry.getValue(),
+                jObj.getKeysWithPrefix(options.prefixMappings.get(entry.getKey()))
+            );
         }
 
         return values;
