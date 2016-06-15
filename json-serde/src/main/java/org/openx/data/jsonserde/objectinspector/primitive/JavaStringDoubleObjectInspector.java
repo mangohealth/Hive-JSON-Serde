@@ -36,7 +36,7 @@ public class JavaStringDoubleObjectInspector extends AbstractPrimitiveJavaObject
     @Override
     public double get(Object o) {
         if(ParsePrimitiveUtils.isString(o)) {
-           return Double.parseDouble(o.toString());
+           return ParsePrimitiveUtils.parseDouble(o.toString());
         } else {
           return (Double) o;
         }
