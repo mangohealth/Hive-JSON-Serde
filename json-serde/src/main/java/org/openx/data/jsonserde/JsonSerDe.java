@@ -90,7 +90,7 @@ public class JsonSerDe implements SerDe {
     public static final String PROP_UNMAPPED_ATTR_KEY = "unmapped.attr.key";
 
     // Allow first level object keys w/ a given prefix to get aggregated into a well formed table column
-    public static final String PROP_PREFIX_MAPPING_PREFIX = "unmapped.prefix.";
+    public static final String PROP_PREFIX_MAPPING_PREFIX = "prefix.for.";
 
    JsonStructOIOptions options;
 
@@ -480,8 +480,8 @@ public class JsonSerDe implements SerDe {
                 String configKey = (String) entry;
                 if (configKey.startsWith(PROP_PREFIX_MAPPING_PREFIX)) {
                     retVal.put(
-                        tbl.getProperty(configKey).toLowerCase(),
-                        configKey.substring(configSuffixLen)
+                        configKey.substring(configSuffixLen),
+                        tbl.getProperty(configKey).toLowerCase()
                     );
                 }
             }

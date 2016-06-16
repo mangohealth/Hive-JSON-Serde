@@ -33,7 +33,7 @@ class UnmappedPrefixTest {
               listed2 INT,
               a MAP<STRING, INT>,
               b MAP<STRING, FLOAT>,
-              c map<string, string>,
+              c map<STRING, STRING>,
               d MAP<STRING, ARRAY<INT>>,
               e MAP<STRING, MAP<STRING, INT>>,
               f MAP<STRING, BOOLEAN>,
@@ -42,18 +42,20 @@ class UnmappedPrefixTest {
                 h1:STRING,
                 h2:INT
               >>,
+              a2 MAP<STRING, STRING>,
               unmapped_cols MAP<STRING, STRING>
             )
             ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
             WITH SERDEPROPERTIES (
-              "unmapped.prefix.a_" = "a",
-              "unmapped.prefix.b_" = "b",
-              "unmapped.prefix.c_" = "c",
-              "unmapped.prefix.d_" = "d",
-              "unmapped.prefix.e_" = "e",
-              "unmapped.prefix.f_" = "f",
-              "unmapped.prefix.g_" = "g",
-              "unmapped.prefix.h_" = "h",
+              "prefix.for.a" = "a_",
+              "prefix.for.b" = "b_",
+              "prefix.for.c" = "c_",
+              "prefix.for.d" = "d_",
+              "prefix.for.e" = "e_",
+              "prefix.for.f" = "f_",
+              "prefix.for.g" = "g_",
+              "prefix.for.h" = "h_",
+              "prefix.for.a2" = "a_",
               "unmapped.attr.key" = "unmapped_cols"
             )
             LOCATION '${tmpDir.root.absolutePath}';
@@ -67,17 +69,19 @@ class UnmappedPrefixTest {
         Assert.assertEquals(1, results.size)
         println(results.first())
         val cols = results.first().split("\t")
-        Assert.assertEquals("1", cols[0])
-        Assert.assertEquals("2", cols[1])
-        Assert.assertEquals("""{"a_456":2,"a_123":1,"a_789":3}""", cols[2])
-        Assert.assertEquals("""{"b_123":1.1}""", cols[3])
-        Assert.assertEquals("""{"c_123":"hello"}""", cols[4])
-        Assert.assertEquals("""{"d_123":[1,2,3]}""", cols[5])
-        Assert.assertEquals("""{"e_123":{"b":2,"a":1}}""", cols[6])
-        Assert.assertEquals("""{"f_123":true}""", cols[7])
-        Assert.assertEquals("""{"g_123":null}""", cols[8])
-        Assert.assertEquals("""{"h_123":{"h1":"abc","h2":1}}""", cols[9])
-        Assert.assertEquals("""{"bob":"123","nancy":"\"hello\""}""", cols[10])
+        Assert.assertEquals("regular col 1", "1", cols[0])
+        Assert.assertEquals("regular col 2", "2", cols[1])
+        Assert.assertEquals("int collecting", """{"a_456":2,"a_123":1,"a_789":3}""", cols[2])
+        Assert.assertEquals("float collecting", """{"b_123":1.1}""", cols[3])
+        Assert.assertEquals("string collecting", """{"c_123":"hello"}""", cols[4])
+        Assert.assertEquals("array<int> collecting", """{"d_123":[1,2,3]}""", cols[5])
+        Assert.assertEquals("map<string,int> collecting", """{"e_123":{"b":2,"a":1}}""", cols[6])
+        Assert.assertEquals("boolean collecting", """{"f_123":true}""", cols[7])
+        Assert.assertEquals("null collecting", """{"g_123":null}""", cols[8])
+        Assert.assertEquals("struct collecting", """{"h_123":{"h1":"abc","h2":1}}""", cols[9])
+        Assert.assertEquals("mapping the same prefix twice", """{"a_456":"2","a_123":"1","a_789":"3"}""", cols[10])
+        Assert.assertEquals("unmapped entries still works", """{"bob":"123","nancy":"\"hello\""}""", cols[11])
+
     }
 
 }
