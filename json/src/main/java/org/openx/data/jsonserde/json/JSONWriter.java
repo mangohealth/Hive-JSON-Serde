@@ -236,7 +236,7 @@ public class JSONWriter {
         }
         if (this.mode == 'o' || this.mode == 'a') {
             this.append("{");
-            this.push(new JSONObject());
+            this.push(new JSONObject("json-writer"));
             this.comma = false;
             return this;
         }

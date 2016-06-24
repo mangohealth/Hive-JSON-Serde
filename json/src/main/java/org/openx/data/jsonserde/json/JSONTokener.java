@@ -367,7 +367,7 @@ public class JSONTokener {
      *
      * @return An object.
      */
-    public Object nextValue() throws JSONException {
+    public Object nextValue(String parent) throws JSONException {
         char c = nextClean();
         String string;
 
@@ -377,7 +377,7 @@ public class JSONTokener {
                 return nextString(c);
             case '{':
                 back();
-                return new JSONObject(this);
+                return new JSONObject(this, parent);
             case '[':
                 back();
                 return new JSONArray(this);

@@ -27,10 +27,7 @@ SOFTWARE.
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A JSONArray is an ordered sequence of values. Its external text form is a
@@ -82,11 +79,14 @@ import java.util.Map;
  */
 public class JSONArray {
 
+    public static JSONArray EMPTY_ARRAY = new JSONArray() {{
+        this.myArrayList = Collections.unmodifiableList(new ArrayList());
+    }};
 
     /**
      * The arrayList where the JSONArray's properties are kept.
      */
-    private ArrayList myArrayList;
+    protected List myArrayList;
 
 
     /**
@@ -114,7 +114,7 @@ public class JSONArray {
 	                this.myArrayList.add(JSONObject.NULL);
 	            } else {
 	                x.back();
-	                this.myArrayList.add(x.nextValue());
+	                this.myArrayList.add(x.nextValue("array"));
 	            }
 	            switch (x.nextClean()) {
 	            case ';':
@@ -629,7 +629,7 @@ public class JSONArray {
      * @return      this.
      */
     public JSONArray put(Map value) {
-        put(new JSONObject(value));
+        put(new JSONObject(value, "array"));
         return this;
     }
 
@@ -733,7 +733,7 @@ public class JSONArray {
      *  an invalid number.
      */
     public JSONArray put(int index, Map value) throws JSONException {
-        put(index, new JSONObject(value));
+        put(index, new JSONObject(value, "array"));
         return this;
     }
 
@@ -793,7 +793,7 @@ public class JSONArray {
         if (names == null || names.length() == 0 || length() == 0) {
             return null;
         }
-        JSONObject jo = new JSONObject();
+        JSONObject jo = new JSONObject(this,"array");
         for (int i = 0; i < names.length(); i += 1) {
             jo.put(names.getString(i), this.opt(i));
         }
@@ -918,7 +918,7 @@ public class JSONArray {
         }
     }
 
-    public ArrayList getAsArrayList() {
+    public List getAsList() {
         return myArrayList;
     }
     

@@ -35,7 +35,8 @@ public class JsonListObjectInspector extends StandardListObjectInspector {
     if (data == null || JSONObject.NULL.equals(data)) {
       return null;
     }
-    JSONArray array = (JSONArray) data;
+
+    JSONArray array = safetyCheck(data);
     List al = new ArrayList(array.length());
     for(int i =0; i< array.length(); i++) {
 	al.add(getListElement(data,i));
@@ -48,7 +49,8 @@ public class JsonListObjectInspector extends StandardListObjectInspector {
     if (data == null) {
       return null;
     }
-    JSONArray array = (JSONArray) data;
+
+    JSONArray array = safetyCheck(data);
     try {
         Object obj =  array.get(index);
 	if(JSONObject.NULL == obj) {
@@ -66,8 +68,34 @@ public class JsonListObjectInspector extends StandardListObjectInspector {
     if (data == null) {
       return -1;
     }
-    JSONArray array = (JSONArray) data;
+
+    JSONArray array = safetyCheck(data);
     return array.length();
   }
+
+  private JSONArray safetyCheck(Object data) {
+    if(!(data instanceof JSONArray)) {
+      // Allow empty objects to get translated as empty lists if that's what we expected.
+      // Do this because when we fail to parse some JSON, it'll default to {} which will otherwise
+      // cause this to break.
+      if(data instanceof JSONObject) {
+        JSONObject obj = (JSONObject) data;
+        if(obj.length() == 0) {
+          return JSONArray.EMPTY_ARRAY;
+        }
+      }
+
+      // Try to make as helpful an error message as possible so user can debug the problem
+      String msg = "Could not cast to JSONArray:  [[" + data.getClass() + "]] => ";
+      if(data instanceof JSONObject) {
+        msg += "[[parent=" + ((JSONObject) data).getParent() + "]] ";
+      }
+      msg += data.toString();
+      throw new RuntimeException(msg);
+    }
+
+    return (JSONArray) data;
+  }
+
     
 }

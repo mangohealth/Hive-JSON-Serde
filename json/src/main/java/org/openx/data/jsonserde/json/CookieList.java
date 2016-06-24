@@ -47,7 +47,7 @@ public class CookieList {
      * @throws JSONException
      */
     public static JSONObject toJSONObject(String string) throws JSONException {
-        JSONObject jo = new JSONObject();
+        JSONObject jo = new JSONObject("cookie-list");
         JSONTokener x = new JSONTokener(string, false);
         while (x.more()) {
             String name = Cookie.unescape(x.nextTo('='));

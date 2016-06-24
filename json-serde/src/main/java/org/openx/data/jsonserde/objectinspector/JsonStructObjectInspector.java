@@ -66,7 +66,7 @@ public class JsonStructObjectInspector extends StandardStructObjectInspector {
             // sometimes getting [] instead of {} for an empty field.
             // this line should help them
             if(ja.length() == 0 ) return null;
-            return getStructFieldDataFromList(ja.getAsArrayList(), fieldRef );
+            return getStructFieldDataFromList(ja.getAsList(), fieldRef );
         } else {
             throw new Error("Data is not JSONObject  but " + data.getClass().getCanonicalName() +
                     " with value " + data.toString()) ;
