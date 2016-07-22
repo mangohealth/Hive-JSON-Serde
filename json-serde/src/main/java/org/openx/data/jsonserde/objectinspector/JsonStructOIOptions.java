@@ -12,6 +12,8 @@
 
 package org.openx.data.jsonserde.objectinspector;
 
+import org.openx.data.jsonserde.json.ReplaceNode;
+
 import java.util.Map;
 
 /**
@@ -25,9 +27,9 @@ import java.util.Map;
      */
 public  class JsonStructOIOptions {
         Map<String,String> mappings;
-        Map<String,String> jsonKeyReplacements;
+        ReplaceNode jsonKeyReplacements;
 
-        public JsonStructOIOptions (Map<String,String> mp, Map<String, String> jsonKeyReplacements) {
+        public JsonStructOIOptions (Map<String,String> mp, ReplaceNode jsonKeyReplacements) {
             mappings = mp;
             this.jsonKeyReplacements = jsonKeyReplacements;
         }
@@ -41,7 +43,7 @@ public  class JsonStructOIOptions {
             return mappings;
         }
 
-        public Map<String, String> getJsonKeyReplacements() { return jsonKeyReplacements; }
+        public ReplaceNode getJsonKeyReplacements() { return jsonKeyReplacements; }
 
      public boolean isDotsInKeyNames() {
          return dotsInKeyNames;

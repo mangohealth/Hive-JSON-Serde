@@ -45,6 +45,7 @@ import org.apache.hadoop.io.Text;
 import org.openx.data.jsonserde.json.JSONArray;
 import org.openx.data.jsonserde.json.JSONException;
 import org.openx.data.jsonserde.json.JSONObject;
+import org.openx.data.jsonserde.json.ReplaceNode;
 import org.openx.data.jsonserde.objectinspector.JsonObjectInspectorFactory;
 import org.openx.data.jsonserde.objectinspector.JsonStructOIOptions;
 
@@ -467,6 +468,7 @@ public class JsonSerDe implements SerDe {
     }
 
     public static final String CHANGE_KEY_TO_PREFIX = "changekeyto.";
+
     /**
      * Builds mappings for json attribute names in case we want to refer to them as something else in the schema.
      * This can be very useful for struct elements that use HiveQL keywords.
@@ -474,22 +476,36 @@ public class JsonSerDe implements SerDe {
      * @param tbl
      * @return
      */
-    private Map<String, String> getKeyReplacements(Properties tbl) {
+    private ReplaceNode getKeyReplacements(Properties tbl) {
         int n = CHANGE_KEY_TO_PREFIX.length();
-        Map<String,String> mps = new HashMap<String,String>();
+        ReplaceNode retVal = new ReplaceNode();
 
         for(Object o: tbl.keySet()) {
             if( ! (o instanceof String)) { continue ; }
             String s = (String) o;
 
-            if(s.startsWith(CHANGE_KEY_TO_PREFIX) ) {
-                mps.put(tbl.getProperty(s).toLowerCase(), s.substring(n));
+            if(s.startsWith(CHANGE_KEY_TO_PREFIX)) {
+                Map<String, ReplaceNode> branch = retVal.children;
+                ReplaceNode node = null;
+                for(String pathPart : tbl.getProperty(s).toLowerCase().split("\\.")) {
+                    node = branch.get(pathPart);
+                    if(node == null) {
+                        node = new ReplaceNode();
+                        branch.put(pathPart, node);
+                    }
+                    branch = node.children;
+                }
+
+                // Node should never be null!
+                if(node != null) {
+                    node.replaceWith = s.substring(n);
+                }
             }
         }
 
         // For performance reasons, allow a clear signal to say "no swaps ever!"
-        if(mps.size() > 0) {
-            return mps;
+        if(retVal.children.size() > 0) {
+            return retVal;
         }
         return null;
     }
