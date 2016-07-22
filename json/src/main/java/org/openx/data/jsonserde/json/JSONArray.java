@@ -141,7 +141,7 @@ public class JSONArray {
      *  and ends with <code>]</code>&nbsp;<small>(right bracket)</small>.
      *  @throws JSONException If there is a syntax error.
      */
-    public JSONArray(String source, boolean allowDuplicates, Map<String, String> keySwapMap) throws JSONException {
+    public JSONArray(String source, boolean allowDuplicates, ReplaceNode keySwapMap) throws JSONException {
         this(new JSONTokener(source, allowDuplicates, keySwapMap));
     }
 

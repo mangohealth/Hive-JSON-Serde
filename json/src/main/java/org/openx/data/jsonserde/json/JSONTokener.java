@@ -52,7 +52,7 @@ public class JSONTokener {
     private boolean usePrevious;
     private boolean allowDuplicates;
 
-    private Map<String, String> keySwapMap;
+    private ReplaceNode keySwapMap;
     private Stack<String> parseStack = new Stack<String>();
 
     /**
@@ -60,7 +60,7 @@ public class JSONTokener {
      *
      * @param reader     A reader.
      */
-    public JSONTokener(Reader reader, boolean allowDuplicates, Map<String, String> keySwapMap) {
+    public JSONTokener(Reader reader, boolean allowDuplicates, ReplaceNode keySwapMap) {
         this.reader = reader.markSupported() ? 
         		reader : new BufferedReader(reader);
         this.eof = false;
@@ -79,7 +79,7 @@ public class JSONTokener {
      * @param inputStream
      * @throws org.openx.data.jsonserde.json.JSONException
      */
-    public JSONTokener(InputStream inputStream, boolean allowDuplicates, Map<String, String> keySwapMap) throws JSONException {
+    public JSONTokener(InputStream inputStream, boolean allowDuplicates, ReplaceNode keySwapMap) throws JSONException {
         this(new InputStreamReader(inputStream), allowDuplicates, keySwapMap);
     }
 
@@ -89,7 +89,7 @@ public class JSONTokener {
      *
      * @param s     A source string.
      */
-    public JSONTokener(String s, boolean allowDuplicates, Map<String, String> keySwapMap) {
+    public JSONTokener(String s, boolean allowDuplicates, ReplaceNode keySwapMap) {
         this(new StringReader(s), allowDuplicates, keySwapMap);
     }
 
@@ -469,16 +469,17 @@ public class JSONTokener {
     public String pushKey(String thisKey) {
         if(keySwapMap != null) {
             parseStack.push(thisKey);
-            StringBuilder context = new StringBuilder();
+            ReplaceNode node = keySwapMap;
             for (String key : parseStack) {
-                if(context.length() > 0) {
-                    context.append(".");
+                node = node.nextNode(key);
+                if(node == null) {
+                    return thisKey;
                 }
-                context.append(key);
             }
-            String altKey = keySwapMap.get(context.toString().toLowerCase());
-            if (altKey != null) {
-                return altKey;
+
+            // If found pattern match and there's a replacement for it, then swap!
+            if(node != null && node.replaceWith != null) {
+                return node.replaceWith;
             }
         }
         return thisKey;

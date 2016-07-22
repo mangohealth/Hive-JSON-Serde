@@ -319,7 +319,7 @@ public class JSONObject {
      * @exception JSONException If there is a syntax error in the source
      *  string or a duplicated key.
      */
-    public JSONObject(String source, boolean allowDuplicates, Map<String, String> keySwapMap, String parent) throws JSONException {
+    public JSONObject(String source, boolean allowDuplicates, ReplaceNode keySwapMap, String parent) throws JSONException {
         this(new JSONTokener(source, allowDuplicates, keySwapMap), parent);
     }
 
