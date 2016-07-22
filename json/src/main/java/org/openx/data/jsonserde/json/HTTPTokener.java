@@ -37,7 +37,7 @@ public class HTTPTokener extends JSONTokener {
      * @param string A source string.
      */
     public HTTPTokener(String string) {
-        super(string, false);
+        super(string, false, null);
     }
 
 

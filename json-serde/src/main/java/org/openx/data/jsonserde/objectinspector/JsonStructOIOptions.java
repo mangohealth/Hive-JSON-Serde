@@ -25,8 +25,11 @@ import java.util.Map;
      */
 public  class JsonStructOIOptions {
         Map<String,String> mappings;
-        public JsonStructOIOptions (Map<String,String> mp) {
+        Map<String,String> jsonKeyReplacements;
+
+        public JsonStructOIOptions (Map<String,String> mp, Map<String, String> jsonKeyReplacements) {
             mappings = mp;
+            this.jsonKeyReplacements = jsonKeyReplacements;
         }
 
         boolean dotsInKeyNames = false;
@@ -37,6 +40,8 @@ public  class JsonStructOIOptions {
         public Map<String, String> getMappings() {
             return mappings;
         }
+
+        public Map<String, String> getJsonKeyReplacements() { return jsonKeyReplacements; }
 
      public boolean isDotsInKeyNames() {
          return dotsInKeyNames;

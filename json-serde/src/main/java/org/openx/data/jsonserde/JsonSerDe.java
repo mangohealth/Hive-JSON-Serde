@@ -135,7 +135,7 @@ public class JsonSerDe implements SerDe {
         
         // build options
         options = 
-                new JsonStructOIOptions(getMappings(tbl));
+                new JsonStructOIOptions(getMappings(tbl), getKeyReplacements(tbl));
 
         // Get the sort order
         String columnSortOrder = tbl.getProperty(Constants.SERIALIZATION_SORT_ORDER);
@@ -184,16 +184,16 @@ public class JsonSerDe implements SerDe {
             String txt = rowText.toString().trim();
             
             if(txt.startsWith("{")) {
-                jObj = new JSONObject(txt, allowDuplicates, "deserialize-base");
+                jObj = new JSONObject(txt, allowDuplicates, options.getJsonKeyReplacements(), "deserialize-base");
             } else if (txt.startsWith("[")){
-                jObj = new JSONArray(txt, allowDuplicates);
+                jObj = new JSONArray(txt, allowDuplicates, options.getJsonKeyReplacements());
             }
         } catch (JSONException e) {
             // If row is not a JSON object, make the whole row NULL
             onMalformedJson("Row is not a valid JSON Object - JSONException: "
                     + e.getMessage(), rowText.toString().trim());
             try {
-                jObj = new JSONObject("{}", allowDuplicates, "malformed");
+                jObj = new JSONObject("{}", allowDuplicates, options.getJsonKeyReplacements(), "malformed");
             } catch (JSONException ex) {
                 onMalformedJson("Error parsing empty row. This should never happen.", "");
             }
@@ -464,6 +464,34 @@ public class JsonSerDe implements SerDe {
             }
         }
         return mps;
+    }
+
+    public static final String CHANGE_KEY_TO_PREFIX = "changekeyto.";
+    /**
+     * Builds mappings for json attribute names in case we want to refer to them as something else in the schema.
+     * This can be very useful for struct elements that use HiveQL keywords.
+     *
+     * @param tbl
+     * @return
+     */
+    private Map<String, String> getKeyReplacements(Properties tbl) {
+        int n = CHANGE_KEY_TO_PREFIX.length();
+        Map<String,String> mps = new HashMap<String,String>();
+
+        for(Object o: tbl.keySet()) {
+            if( ! (o instanceof String)) { continue ; }
+            String s = (String) o;
+
+            if(s.startsWith(CHANGE_KEY_TO_PREFIX) ) {
+                mps.put(tbl.getProperty(s).toLowerCase(), s.substring(n));
+            }
+        }
+
+        // For performance reasons, allow a clear signal to say "no swaps ever!"
+        if(mps.size() > 0) {
+            return mps;
+        }
+        return null;
     }
 
     /**

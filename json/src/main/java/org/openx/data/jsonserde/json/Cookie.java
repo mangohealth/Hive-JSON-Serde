@@ -82,7 +82,7 @@ public class Cookie {
         String         name;
         JSONObject     jo = new JSONObject("cookie");
         Object         value;
-        JSONTokener x = new JSONTokener(string, false);
+        JSONTokener x = new JSONTokener(string, false, null);
         jo.put("name", x.nextTo('='));
         x.next('=');
         jo.put("value", x.nextTo(';'));

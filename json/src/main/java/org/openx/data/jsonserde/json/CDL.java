@@ -179,7 +179,7 @@ public class CDL {
      * @throws JSONException
      */
     public static JSONArray toJSONArray(String string) throws JSONException {
-        return toJSONArray(new JSONTokener(string, false));
+        return toJSONArray(new JSONTokener(string, false, null));
     }
 
     /**
@@ -203,7 +203,7 @@ public class CDL {
      */
     public static JSONArray toJSONArray(JSONArray names, String string)
             throws JSONException {
-        return toJSONArray(names, new JSONTokener(string, false));
+        return toJSONArray(names, new JSONTokener(string, false, null));
     }
 
     /**

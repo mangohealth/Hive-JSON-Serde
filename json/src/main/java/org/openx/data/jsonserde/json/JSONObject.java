@@ -216,7 +216,9 @@ public class JSONObject {
             } else if (c != ':') {
                 throw x.syntaxError("Expected a ':' after a key");
             }
-            putOnce(key, x.nextValue(key), x.isAllowDuplicates());
+            String safeKey = x.pushKey(key);
+            putOnce(safeKey, x.nextValue(safeKey), x.isAllowDuplicates());
+            x.popKey();
 
 // Pairs are separated by ','. We will also tolerate ';'.
 
@@ -317,8 +319,8 @@ public class JSONObject {
      * @exception JSONException If there is a syntax error in the source
      *  string or a duplicated key.
      */
-    public JSONObject(String source, boolean allowDuplicates, String parent) throws JSONException {
-        this(new JSONTokener(source, allowDuplicates), parent);
+    public JSONObject(String source, boolean allowDuplicates, Map<String, String> keySwapMap, String parent) throws JSONException {
+        this(new JSONTokener(source, allowDuplicates, keySwapMap), parent);
     }
 
 

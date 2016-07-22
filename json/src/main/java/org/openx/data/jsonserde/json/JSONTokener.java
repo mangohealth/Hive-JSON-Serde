@@ -6,6 +6,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
 
 /*
 Copyright (c) 2002 JSON.org
@@ -49,13 +52,15 @@ public class JSONTokener {
     private boolean usePrevious;
     private boolean allowDuplicates;
 
+    private Map<String, String> keySwapMap;
+    private Stack<String> parseStack = new Stack<String>();
 
     /**
      * Construct a JSONTokener from a Reader.
      *
      * @param reader     A reader.
      */
-    public JSONTokener(Reader reader, boolean allowDuplicates) {
+    public JSONTokener(Reader reader, boolean allowDuplicates, Map<String, String> keySwapMap) {
         this.reader = reader.markSupported() ? 
         		reader : new BufferedReader(reader);
         this.eof = false;
@@ -65,6 +70,7 @@ public class JSONTokener {
         this.character = 1;
         this.line = 1;
         this.allowDuplicates = allowDuplicates;
+        this.keySwapMap = keySwapMap;
     }
     
     
@@ -73,8 +79,8 @@ public class JSONTokener {
      * @param inputStream
      * @throws org.openx.data.jsonserde.json.JSONException
      */
-    public JSONTokener(InputStream inputStream, boolean allowDuplicates) throws JSONException {
-        this(new InputStreamReader(inputStream), allowDuplicates);
+    public JSONTokener(InputStream inputStream, boolean allowDuplicates, Map<String, String> keySwapMap) throws JSONException {
+        this(new InputStreamReader(inputStream), allowDuplicates, keySwapMap);
     }
 
 
@@ -83,8 +89,8 @@ public class JSONTokener {
      *
      * @param s     A source string.
      */
-    public JSONTokener(String s, boolean allowDuplicates) {
-        this(new StringReader(s), allowDuplicates);
+    public JSONTokener(String s, boolean allowDuplicates, Map<String, String> keySwapMap) {
+        this(new StringReader(s), allowDuplicates, keySwapMap);
     }
 
 
@@ -455,5 +461,32 @@ public class JSONTokener {
     public String toString() {
         return " at " + index + " [character " + this.character + " line " + 
         	this.line + "]";
+    }
+
+    /**
+     * Allows user to specify deep keys name swaps since mapping. properties only affect the first level
+     */
+    public String pushKey(String thisKey) {
+        if(keySwapMap != null) {
+            parseStack.push(thisKey);
+            StringBuilder context = new StringBuilder();
+            for (String key : parseStack) {
+                if(context.length() > 0) {
+                    context.append(".");
+                }
+                context.append(key);
+            }
+            String altKey = keySwapMap.get(context.toString().toLowerCase());
+            if (altKey != null) {
+                return altKey;
+            }
+        }
+        return thisKey;
+    }
+
+    public void popKey() {
+        if(keySwapMap != null) {
+            parseStack.pop();
+        }
     }
 }

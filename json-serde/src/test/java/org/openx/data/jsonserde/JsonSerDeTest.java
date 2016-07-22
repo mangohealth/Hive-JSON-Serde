@@ -332,7 +332,7 @@ public class JsonSerDeTest {
 
         Object result = instance.serialize(row, soi);
 
-        JSONObject res = new JSONObject(result.toString(), false, "test");
+        JSONObject res = new JSONObject(result.toString(), false, null, "test");
         assertEquals(res.getString("atext"), row.get(0));
 
         assertEquals(res.get("anumber"), row.get(1));
