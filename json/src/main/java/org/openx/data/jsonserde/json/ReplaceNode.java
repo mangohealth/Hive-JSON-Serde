@@ -35,6 +35,9 @@ public class ReplaceNode {
             String key = entry.getKey();
             ReplaceNode node = entry.getValue();
             if(key.endsWith("*")) {
+                if(normKeyToMatch.length() < (key.length()-1)) {
+                    continue;
+                }
                 String keyPart = key.substring(0, key.length()-1);
                 String normKeyToMatchPart = normKeyToMatch.substring(0, key.length()-1);
                 if(keyPart.equalsIgnoreCase(normKeyToMatchPart)) {
