@@ -104,10 +104,10 @@ public class JsonStructObjectInspector extends StandardStructObjectInspector {
         
         try {
             if (fieldRef.getFieldName().equalsIgnoreCase(options.unmappedValuesFieldName)) {
-                fieldData = data.getNotTheseKeys(getJsonFieldNames(), options.prefixMappings.values());
+                fieldData = data.getNotTheseKeys(getJsonFieldNames(), options.getAllMappedPrefixes());
             }
             else if (options.prefixMappings.containsKey(fieldRef.getFieldName())) {
-                fieldData = data.getKeysWithPrefix(options.prefixMappings.get(fieldRef.getFieldName()));
+                fieldData = data.getKeysWithPrefixes(options.prefixMappings.get(fieldRef.getFieldName()));
             }
             else if (data.has(getJsonField(fieldRef))) {
                fieldData = data.get(getJsonField(fieldRef));
@@ -187,14 +187,14 @@ public class JsonStructObjectInspector extends StandardStructObjectInspector {
         if(unmappedFieldPosition != -1) {
             values.set(
                 unmappedFieldPosition,
-                jObj.getNotTheseKeys(getJsonFieldNames(), options.prefixMappings.values())
+                jObj.getNotTheseKeys(getJsonFieldNames(), options.getAllMappedPrefixes())
             );
         }
 
         for(Map.Entry<String, Integer> entry : prefixFieldPositions.entrySet()) {
             values.set(
                 entry.getValue(),
-                jObj.getKeysWithPrefix(options.prefixMappings.get(entry.getKey()))
+                jObj.getKeysWithPrefixes(options.prefixMappings.get(entry.getKey()))
             );
         }
 
