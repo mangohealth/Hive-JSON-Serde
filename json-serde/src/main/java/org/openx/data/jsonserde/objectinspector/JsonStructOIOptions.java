@@ -14,6 +14,8 @@ package org.openx.data.jsonserde.objectinspector;
 
 import org.openx.data.jsonserde.json.ReplaceNode;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,7 +39,7 @@ public  class JsonStructOIOptions {
         boolean dotsInKeyNames = false;
         String unmappedValuesFieldName = null;
 
-        Map<String, String> prefixMappings = null;
+        Map<String, String[]> prefixMappings = null;
 
         public Map<String, String> getMappings() {
             return mappings;
@@ -57,8 +59,18 @@ public  class JsonStructOIOptions {
          this.unmappedValuesFieldName = unmappedValuesFieldName;
      }
 
-     public void setPrefixMappings(Map<String, String> prefixMappings) {
+     public void setPrefixMappings(Map<String, String[]> prefixMappings) {
          this.prefixMappings = prefixMappings;
+     }
+
+     public List<String> getAllMappedPrefixes() {
+         List<String> retVal = new ArrayList<String>();
+         for(String[] prefixes : prefixMappings.values()) {
+             for(String prefix : prefixes) {
+                 retVal.add(prefix);
+             }
+         }
+         return retVal;
      }
 
      @Override

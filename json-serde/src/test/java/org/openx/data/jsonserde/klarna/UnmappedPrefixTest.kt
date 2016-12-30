@@ -18,8 +18,8 @@ class UnmappedPrefixTest {
     @field:HiveSQL(files = arrayOf())
     var hiveShell:HiveShell? = null
 
-    @Before
-    fun prepare() {
+    @Test
+    fun verifyFullRead() {
         val tmpDir = TemporaryFolder()
         tmpDir.create()
         FileUtils.copyInputStreamToFile(
@@ -60,10 +60,7 @@ class UnmappedPrefixTest {
             )
             LOCATION '${tmpDir.root.absolutePath}';
         """)
-    }
 
-    @Test
-    fun verifyFullRead() {
         var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
         Assert.assertNotNull(results)
         Assert.assertEquals(1, results.size)
@@ -81,7 +78,41 @@ class UnmappedPrefixTest {
         Assert.assertEquals("struct collecting", """{"h_123":{"h1":"abc","h2":1}}""", cols[9])
         Assert.assertEquals("mapping the same prefix twice", """{"a_456":"2","a_123":"1","a_789":"3"}""", cols[10])
         Assert.assertEquals("unmapped entries still works", """{"bob":"123","nancy":"\"hello\""}""", cols[11])
+    }
 
+    @Test
+    fun verifyRepeatedKeys() {
+        val tmpDir = TemporaryFolder()
+        tmpDir.create()
+        FileUtils.copyInputStreamToFile(
+            this.javaClass.getResourceAsStream("/unmapped_prefix_merge.txt"),
+            tmpDir.newFile()
+        )
+        hiveShell!!.execute("""
+            DROP TABLE IF EXISTS test_input;
+            CREATE EXTERNAL TABLE test_input (
+              merged MAP<STRING, STRUCT<
+                k1:STRING,
+                k2:INT
+              >>
+            )
+            ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
+            WITH SERDEPROPERTIES (
+              "prefix.for.merged" = "a_,b_,c_"
+            )
+            LOCATION '${tmpDir.root.absolutePath}';
+        """)
+
+        var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
+        Assert.assertNotNull(results)
+        Assert.assertEquals(1, results.size)
+        println(results.first())
+        val cols = results.first().split("\t")
+        Assert.assertEquals(
+            "merged multiple prefixes",
+            """{"b_123":{"k1":"hola","k2":3},"a_456":{"k1":"hola","k2":2},"c_456":{"k1":"hola","k2":6},"a_123":{"k1":"hola","k2":1},"c_123":{"k1":"hola","k2":5},"b_456":{"k1":"hola","k2":4}}""",
+            cols[0]
+        )
     }
 
 }

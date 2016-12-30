@@ -515,18 +515,18 @@ public class JsonSerDe implements SerDe {
      * @param tbl
      * @return
      */
-    private Map<String, String> getPrefixMappings(Properties tbl) {
+    private Map<String, String[]> getPrefixMappings(Properties tbl) {
         int configSuffixLen = PROP_PREFIX_MAPPING_PREFIX.length();
-        Map<String, String> retVal = new HashMap<String,String>();
+        Map<String, String[]> retVal = new HashMap<String,String[]>();
 
         for(Object entry: tbl.keySet()) {
             if(entry instanceof String) {
                 String configKey = (String) entry;
                 if (configKey.startsWith(PROP_PREFIX_MAPPING_PREFIX)) {
-                    retVal.put(
-                        configKey.substring(configSuffixLen),
-                        tbl.getProperty(configKey).toLowerCase()
-                    );
+                    String fieldName = configKey.substring(configSuffixLen);
+                    String prefixesRaw = tbl.getProperty(configKey).toLowerCase();
+                    String[] prefixes = prefixesRaw.split(",[ \t]*");
+                    retVal.put(fieldName, prefixes);
                 }
             }
         }
