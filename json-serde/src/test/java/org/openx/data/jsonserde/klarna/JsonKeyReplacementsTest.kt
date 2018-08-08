@@ -1,22 +1,17 @@
 package org.openx.data.jsonserde.klarna
 
 import com.klarna.hiverunner.HiveShell
-import com.klarna.hiverunner.StandaloneHiveRunner
 import com.klarna.hiverunner.annotations.HiveSQL
 import org.apache.commons.io.FileUtils
 import org.junit.Assert
-import org.junit.Before
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
 
+class JsonKeyReplacementsTest : TestBase() {
 
-@RunWith(StandaloneHiveRunner::class)
-class JsonKeyReplacementsTest {
-
-    @Suppress("unused")
     @field:HiveSQL(files = arrayOf())
-    var hiveShell:HiveShell? = null
+    override var hiveShell:HiveShell? = null
 
     @Test
     fun withConfig() {
@@ -26,7 +21,7 @@ class JsonKeyReplacementsTest {
             this.javaClass.getResourceAsStream("/json_key_replacements.txt"),
             tmpDir.newFile()
         )
-        hiveShell!!.execute("""
+        execute("""
             DROP TABLE IF EXISTS test_input;
             CREATE EXTERNAL TABLE test_input (
               untouched INT,
@@ -49,17 +44,26 @@ class JsonKeyReplacementsTest {
             LOCATION '${tmpDir.root.absolutePath}';
         """)
 
-        var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
-        Assert.assertNotNull(results)
-        Assert.assertEquals(1, results.size)
-        println(results.first())
-        val cols = results.first().split("\t")
-        Assert.assertEquals("1", cols[0])
-        Assert.assertEquals(
-            """[{"shoop":{"foot":{"testme":123}}},{"shoop":{"foot":{"testme":456}}}]""",
+        val cols = queryForRowJSON("SELECT * FROM test_input")
+        assertEquals("Col count matches", 3, cols.size)
+        assertEquals("untouched matches", 1, cols[0])
+        assertEquals(
+            "ary matches",
+            listOf(
+                mapOf("shoop" to mapOf("foot" to mapOf("testme" to 123))),
+                mapOf("shoop" to mapOf("foot" to mapOf("testme" to 456)))
+            ),
             cols[1]
         )
-        Assert.assertEquals("abc", cols[2])
+        assertEquals("troxy matches", "abc", cols[2])
+
+        // TODO Orig junk
+//        assertEquals("1", cols[0])
+//        assertEquals(
+//            """[{"shoop":{"foot":{"testme":123}}},{"shoop":{"foot":{"testme":456}}}]""",
+//            cols[1]
+//        )
+//        assertEquals("abc", cols[2])
     }
 
     @Test
@@ -70,7 +74,7 @@ class JsonKeyReplacementsTest {
             this.javaClass.getResourceAsStream("/json_key_replacements.txt"),
             tmpDir.newFile()
         )
-        hiveShell!!.execute("""
+        execute("""
             DROP TABLE IF EXISTS test_input;
             CREATE EXTERNAL TABLE test_input (
               untouched INT,
@@ -89,17 +93,26 @@ class JsonKeyReplacementsTest {
             LOCATION '${tmpDir.root.absolutePath}';
         """)
 
-        var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
-        Assert.assertNotNull(results)
-        Assert.assertEquals(1, results.size)
-        println(results.first())
-        val cols = results.first().split("\t")
-        Assert.assertEquals("1", cols[0])
-        Assert.assertEquals(
-            """[{"shoop":{"foot":{"noot":123}}},{"shoop":{"foot":{"noot":456}}}]""",
+        val cols = queryForRowJSON("SELECT * FROM test_input")
+        assertEquals("Col count matches", 3, cols.size)
+        assertEquals("untouched matches", 1, cols[0])
+        assertEquals(
+            "ary matches",
+            listOf(
+                mapOf("shoop" to mapOf("foot" to mapOf("noot" to 123))),
+                mapOf("shoop" to mapOf("foot" to mapOf("noot" to 456)))
+            ),
             cols[1]
         )
-        Assert.assertEquals("abc", cols[2])
+        assertEquals("troxy matches", "abc", cols[2])
+
+        // TODO Orig junk
+//        assertEquals("1", cols[0])
+//        assertEquals(
+//            """[{"shoop":{"foot":{"noot":123}}},{"shoop":{"foot":{"noot":456}}}]""",
+//            cols[1]
+//        )
+//        assertEquals("abc", cols[2])
     }
 
     @Test
@@ -110,7 +123,7 @@ class JsonKeyReplacementsTest {
             this.javaClass.getResourceAsStream("/json_key_replacements_wildcard.txt"),
             tmpDir.newFile()
         )
-        hiveShell!!.execute("""
+        execute("""
             DROP TABLE IF EXISTS test_input;
             CREATE EXTERNAL TABLE test_input (
               untouched INT,
@@ -130,16 +143,24 @@ class JsonKeyReplacementsTest {
             LOCATION '${tmpDir.root.absolutePath}';
         """)
 
-        var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
-        Assert.assertNotNull(results)
-        Assert.assertEquals(1, results.size)
-        println(results.first())
-        val cols = results.first().split("\t")
-        Assert.assertEquals("1", cols[0])
-        Assert.assertEquals(
-            """{"a_2":{"a_child":{"notouch":"def","testme":456}},"a_1":{"a_child":{"notouch":"abc","testme":123}}}""",
+        val cols = queryForRowJSON("SELECT * FROM test_input")
+        assertEquals("Col count matches", 2, cols.size)
+        assertEquals("untouched matches", 1, cols[0])
+        assertEquals(
+            "a matches",
+            mapOf(
+                "a_1" to mapOf("a_child" to mapOf("notouch" to "abc", "testme" to 123)),
+                "a_2" to mapOf("a_child" to mapOf("notouch" to "def", "testme" to 456))
+            ),
             cols[1]
         )
+
+        // TODO Orig junk
+//        assertEquals("1", cols[0])
+//        assertEquals(
+//            """{"a_2":{"a_child":{"notouch":"def","testme":456}},"a_1":{"a_child":{"notouch":"abc","testme":123}}}""",
+//            cols[1]
+//        )
     }
 
     @Test
@@ -150,7 +171,7 @@ class JsonKeyReplacementsTest {
             this.javaClass.getResourceAsStream("/json_key_replacements_wildcard.txt"),
             tmpDir.newFile()
         )
-        hiveShell!!.execute("""
+        execute("""
             DROP TABLE IF EXISTS test_input;
             CREATE EXTERNAL TABLE test_input (
               untouched INT,
@@ -173,16 +194,24 @@ class JsonKeyReplacementsTest {
         """)
 
         // Make sure the longest wildcard match always wins!
-        var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
-        Assert.assertNotNull(results)
-        Assert.assertEquals(1, results.size)
-        println(results.first())
-        val cols = results.first().split("\t")
-        Assert.assertEquals("1", cols[0])
-        Assert.assertEquals(
-            """{"a_2":{"a_child":{"notouch":"def","testme2":456}},"a_1":{"a_child":{"notouch":"abc","testme2":123}}}""",
+        val cols = queryForRowJSON("SELECT * FROM test_input")
+        assertEquals("Col count matches", 2, cols.size)
+        assertEquals("untouched matches", 1, cols[0])
+        assertEquals(
+            "a matches",
+            mapOf(
+                "a_1" to mapOf("a_child" to mapOf("notouch" to "abc", "testme2" to 123)),
+                "a_2" to mapOf("a_child" to mapOf("notouch" to "def", "testme2" to 456))
+            ),
             cols[1]
         )
+
+        // TODO Orig junk
+//        assertEquals("1", cols[0])
+//        assertEquals(
+//            """{"a_2":{"a_child":{"notouch":"def","testme2":456}},"a_1":{"a_child":{"notouch":"abc","testme2":123}}}""",
+//            cols[1]
+//        )
     }
 
 }

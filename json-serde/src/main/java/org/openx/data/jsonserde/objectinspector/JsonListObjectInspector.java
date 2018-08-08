@@ -14,6 +14,9 @@ package org.openx.data.jsonserde.objectinspector;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardListObjectInspector;
 import org.openx.data.jsonserde.json.JSONArray;
@@ -25,6 +28,8 @@ import org.openx.data.jsonserde.json.JSONObject;
  * @author rcongiu
  */
 public class JsonListObjectInspector extends StandardListObjectInspector {
+
+  public static final Log LOG = LogFactory.getLog(JsonListObjectInspector.class);
 
     JsonListObjectInspector(ObjectInspector listElementObjectInspector) {
         super(listElementObjectInspector);
@@ -85,13 +90,19 @@ public class JsonListObjectInspector extends StandardListObjectInspector {
         }
       }
 
-      // Try to make as helpful an error message as possible so user can debug the problem
+      // Try to make as helpful a warning message as possible so user can debug the problem from logs
       String msg = "Could not cast to JSONArray:  [[" + data.getClass() + "]] => ";
       if(data instanceof JSONObject) {
         msg += "[[parent=" + ((JSONObject) data).getParent() + "]] ";
       }
       msg += data.toString();
-      throw new RuntimeException(msg);
+      LOG.warn(msg);
+
+      // Otherwise *force* an array here so we don't bring entire pipeline to a halt during normal ops for
+      // an unanticipated error.  Retain current data in array to leave a trace of what originated here though!
+      JSONArray retVal = new JSONArray();
+      retVal.put(data);
+      return retVal;
     }
 
     return (JSONArray) data;

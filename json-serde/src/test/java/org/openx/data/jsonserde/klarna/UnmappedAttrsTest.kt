@@ -1,32 +1,26 @@
 package org.openx.data.jsonserde.klarna
 
 import com.klarna.hiverunner.HiveShell
-import com.klarna.hiverunner.StandaloneHiveRunner
 import com.klarna.hiverunner.annotations.HiveSQL
 import org.apache.commons.io.FileUtils
-import org.junit.Assert
-import org.junit.Before
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
 
+class UnmappedAttrsTest : TestBase() {
 
-@RunWith(StandaloneHiveRunner::class)
-class UnmappedAttrsTest {
-
-    @Suppress("unused")
     @field:HiveSQL(files = arrayOf())
-    var hiveShell:HiveShell? = null
+    override var hiveShell:HiveShell? = null
 
-    @Before
-    fun prepare() {
+    @Test
+    fun verifyFullRead() {
         val tmpDir = TemporaryFolder()
         tmpDir.create()
         FileUtils.copyInputStreamToFile(
             this.javaClass.getResourceAsStream("/unmapped_attrs.txt"),
             tmpDir.newFile()
         )
-        hiveShell!!.execute("""
+        execute("""
             DROP TABLE IF EXISTS test_input;
             CREATE EXTERNAL TABLE test_input (
               listed1 INT,
@@ -39,19 +33,21 @@ class UnmappedAttrsTest {
             )
             LOCATION '${tmpDir.root.absolutePath}';
         """)
-    }
-
-    @Test
-    fun verifyFullRead() {
-        var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
-        Assert.assertNotNull(results)
-        Assert.assertEquals(1, results.size)
-        println(results.first())
-        val cols = results.first().split("\t")
-        Assert.assertEquals("1", cols[0])
-        Assert.assertEquals("2", cols[1])
-        Assert.assertEquals(
-            """{"f":"true","g":null,"d":"[1,2,3]","e":"{\"b\":2,\"a\":1}","b":"1.1","c":"\"hello\"","a":"1"}""",
+        val cols = queryForRowJSON("SELECT * FROM test_input")
+        assertEquals("Col count matches", 3, cols.size)
+        assertEquals("listed1 matches", 1, cols[0])
+        assertEquals("listed2 matches", 2, cols[1])
+        assertEquals(
+            "unmapped_cols matches",
+            mapOf(
+                "f" to "true",
+                "g" to null,
+                "d" to "[1,2,3]",
+                "e" to "{\"a\":1,\"b\":2}",
+                "b" to "1.1",
+                "c" to "\"hello\"",
+                "a" to "1"
+            ).toSortedMap(),
             cols[2]
         )
     }

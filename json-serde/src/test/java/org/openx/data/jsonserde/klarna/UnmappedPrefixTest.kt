@@ -1,22 +1,16 @@
 package org.openx.data.jsonserde.klarna
 
 import com.klarna.hiverunner.HiveShell
-import com.klarna.hiverunner.StandaloneHiveRunner
 import com.klarna.hiverunner.annotations.HiveSQL
 import org.apache.commons.io.FileUtils
-import org.junit.Assert
-import org.junit.Before
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
 
+class UnmappedPrefixTest : TestBase() {
 
-@RunWith(StandaloneHiveRunner::class)
-class UnmappedPrefixTest {
-
-    @Suppress("unused")
     @field:HiveSQL(files = arrayOf())
-    var hiveShell:HiveShell? = null
+    override var hiveShell:HiveShell? = null
 
     @Test
     fun verifyFullRead() {
@@ -26,7 +20,7 @@ class UnmappedPrefixTest {
             this.javaClass.getResourceAsStream("/unmapped_prefixes.txt"),
             tmpDir.newFile()
         )
-        hiveShell!!.execute("""
+        execute("""
             DROP TABLE IF EXISTS test_input;
             CREATE EXTERNAL TABLE test_input (
               listed1 INT,
@@ -61,23 +55,40 @@ class UnmappedPrefixTest {
             LOCATION '${tmpDir.root.absolutePath}';
         """)
 
-        var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
-        Assert.assertNotNull(results)
-        Assert.assertEquals(1, results.size)
-        println(results.first())
-        val cols = results.first().split("\t")
-        Assert.assertEquals("regular col 1", "1", cols[0])
-        Assert.assertEquals("regular col 2", "2", cols[1])
-        Assert.assertEquals("int collecting", """{"a_456":2,"a_123":1,"a_789":3}""", cols[2])
-        Assert.assertEquals("float collecting", """{"b_123":1.1}""", cols[3])
-        Assert.assertEquals("string collecting", """{"c_123":"hello"}""", cols[4])
-        Assert.assertEquals("array<int> collecting", """{"d_123":[1,2,3]}""", cols[5])
-        Assert.assertEquals("map<string,int> collecting", """{"e_123":{"b":2,"a":1}}""", cols[6])
-        Assert.assertEquals("boolean collecting", """{"f_123":true}""", cols[7])
-        Assert.assertEquals("null collecting", """{"g_123":null}""", cols[8])
-        Assert.assertEquals("struct collecting", """{"h_123":{"h1":"abc","h2":1}}""", cols[9])
-        Assert.assertEquals("mapping the same prefix twice", """{"a_456":"2","a_123":"1","a_789":"3"}""", cols[10])
-        Assert.assertEquals("unmapped entries still works", """{"bob":"123","nancy":"\"hello\""}""", cols[11])
+        val cols = queryForRowJSON("SELECT * FROM test_input")
+        assertEquals("column count should match", 12, cols.size)
+        assertEquals("regular col 1", 1, cols[0])
+        assertEquals("regular col 2", 2, cols[1])
+        assertEquals(
+            "int collecting",
+            mapOf(
+                "a_123" to 1,
+                "a_456" to 2,
+                "a_789" to 3
+            ),
+            cols[2]
+        )
+        assertEquals("float collecting", mapOf("b_123" to 1.1), cols[3])
+        assertEquals("string collecting", mapOf("c_123" to "hello"), cols[4])
+        assertEquals("array<int> collecting", mapOf("d_123" to listOf(1,2,3)), cols[5])
+        assertEquals("map<string,int> collecting",
+            mapOf("e_123" to mapOf("b" to 2, "a" to 1)),
+            cols[6]
+        )
+        assertEquals("boolean collecting", mapOf("f_123" to true), cols[7])
+        assertEquals("null collecting", mapOf("g_123" to null), cols[8])
+        assertEquals("struct collecting",
+            mapOf("h_123" to mapOf("h1" to "abc", "h2" to 1)),
+            cols[9]
+        )
+        assertEquals("mapping the same prefix twice",
+            mapOf("a_456" to "2", "a_123" to "1", "a_789" to "3"),
+            cols[10]
+        )
+        assertEquals("unmapped entries still works",
+            mapOf("bob" to "123", "nancy" to "\"hello\""),
+            cols[11]
+        )
     }
 
     @Test
@@ -88,7 +99,7 @@ class UnmappedPrefixTest {
             this.javaClass.getResourceAsStream("/unmapped_prefix_merge.txt"),
             tmpDir.newFile()
         )
-        hiveShell!!.execute("""
+        execute("""
             DROP TABLE IF EXISTS test_input;
             CREATE EXTERNAL TABLE test_input (
               merged MAP<STRING, STRUCT<
@@ -103,15 +114,16 @@ class UnmappedPrefixTest {
             LOCATION '${tmpDir.root.absolutePath}';
         """)
 
-        var results = hiveShell!!.executeQuery("SELECT * FROM test_input")
-        Assert.assertNotNull(results)
-        Assert.assertEquals(1, results.size)
-        println(results.first())
-        val cols = results.first().split("\t")
-        Assert.assertEquals(
-            "merged multiple prefixes",
-            """{"b_123":{"k1":"hola","k2":3},"a_456":{"k1":"hola","k2":2},"c_456":{"k1":"hola","k2":6},"a_123":{"k1":"hola","k2":1},"c_123":{"k1":"hola","k2":5},"b_456":{"k1":"hola","k2":4}}""",
-            cols[0]
+        assertEquals(
+            mapOf(
+                "a_123" to mapOf("k1" to "hola", "k2" to 1),
+                "a_456" to mapOf("k1" to "hola", "k2" to 2),
+                "b_123" to mapOf("k1" to "hola", "k2" to 3),
+                "b_456" to mapOf("k1" to "hola", "k2" to 4),
+                "c_123" to mapOf("k1" to "hola", "k2" to 5),
+                "c_456" to mapOf("k1" to "hola", "k2" to 6)
+            ),
+            queryForJSON("SELECT * FROM test_input")
         )
     }
 
