@@ -56,14 +56,6 @@ class JsonKeyReplacementsTest : TestBase() {
             cols[1]
         )
         assertEquals("troxy matches", "abc", cols[2])
-
-        // TODO Orig junk
-//        assertEquals("1", cols[0])
-//        assertEquals(
-//            """[{"shoop":{"foot":{"testme":123}}},{"shoop":{"foot":{"testme":456}}}]""",
-//            cols[1]
-//        )
-//        assertEquals("abc", cols[2])
     }
 
     @Test
@@ -105,14 +97,6 @@ class JsonKeyReplacementsTest : TestBase() {
             cols[1]
         )
         assertEquals("troxy matches", "abc", cols[2])
-
-        // TODO Orig junk
-//        assertEquals("1", cols[0])
-//        assertEquals(
-//            """[{"shoop":{"foot":{"noot":123}}},{"shoop":{"foot":{"noot":456}}}]""",
-//            cols[1]
-//        )
-//        assertEquals("abc", cols[2])
     }
 
     @Test
@@ -154,13 +138,6 @@ class JsonKeyReplacementsTest : TestBase() {
             ),
             cols[1]
         )
-
-        // TODO Orig junk
-//        assertEquals("1", cols[0])
-//        assertEquals(
-//            """{"a_2":{"a_child":{"notouch":"def","testme":456}},"a_1":{"a_child":{"notouch":"abc","testme":123}}}""",
-//            cols[1]
-//        )
     }
 
     @Test
@@ -205,13 +182,6 @@ class JsonKeyReplacementsTest : TestBase() {
             ),
             cols[1]
         )
-
-        // TODO Orig junk
-//        assertEquals("1", cols[0])
-//        assertEquals(
-//            """{"a_2":{"a_child":{"notouch":"def","testme2":456}},"a_1":{"a_child":{"notouch":"abc","testme2":123}}}""",
-//            cols[1]
-//        )
     }
 
 }
