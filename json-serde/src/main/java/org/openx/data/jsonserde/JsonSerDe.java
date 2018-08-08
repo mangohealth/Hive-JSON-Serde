@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.*;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
@@ -61,7 +61,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
  * 
  * @author rcongiu
  */
-public class JsonSerDe implements SerDe {
+public class JsonSerDe extends AbstractSerDe {
 
     public static final Log LOG = LogFactory.getLog(JsonSerDe.class);
     List<String> columnNames;
