@@ -51,8 +51,8 @@
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <serde.shim>json-serde-cdh5-shim</serde.shim>
                 <cdh.version>${cdh5.version}</cdh.version>
-                <cdh.hive.version>1.0.0</cdh.hive.version>
-                <cdh.hadoop.version>2.6.0</cdh.hadoop.version>
+                <cdh.hive.version>2.3.3</cdh.hive.version>
+                <cdh.hadoop.version>2.8.4</cdh.hadoop.version>
                 <cdh.shim>cdh5</cdh.shim>
             </properties>
         </profile>
