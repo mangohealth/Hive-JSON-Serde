@@ -135,7 +135,7 @@ public class JSONObject {
     /**
      * The map where the JSONObject's properties are kept.
      */
-    private Map map;
+    private Map<String,Object> map;
 
 
     /**
@@ -157,7 +157,7 @@ public class JSONObject {
      * Construct an empty JSONObject.
      */
     public JSONObject(String parent) {
-        this.map = new HashMap();
+        this.map = new HashMap<String,Object>();
         this.parent = parent;
     }
 
@@ -203,7 +203,7 @@ public class JSONObject {
                 return;
             default:
                 x.back();
-                key = x.nextValue("key").toString().toLowerCase();
+                key = getKey(x.nextValue("key").toString());
             }
 
 // The key is followed by ':'. We will also tolerate '=' or '=>'.
@@ -246,14 +246,14 @@ public class JSONObject {
      *  the JSONObject. 
      */
     public JSONObject(Map map, String parent) {
-        this.map = new HashMap();
+        this.map = new HashMap<String,Object>();
         if (map != null) {
             Iterator i = map.entrySet().iterator();
             while (i.hasNext()) {
                 Map.Entry e = (Map.Entry)i.next();
                 Object value = e.getValue();
                 if (value != null) {
-                    this.map.put(e.getKey(), wrap(value));
+                    this.map.put(e.getKey().toString(), wrap(value));
                 }
             }
         }
@@ -360,6 +360,19 @@ public class JSONObject {
                 }
                 target.put(path[last].toLowerCase(), bundle.getString((String)key));
             }
+        }
+    }
+
+    /**
+     *  Gets the key in an Object, depending if it's lowercase or not.
+     * @param key
+     * @return
+     */
+    private String getKey(String key) {
+        if(JSONOptions.globalOptions.isCaseInsensitive) {
+            return key.toLowerCase();
+        } else {
+            return key;
         }
     }
 
@@ -713,7 +726,7 @@ public class JSONObject {
      *
      * @return An iterator of the keys.
      */
-    public Iterator keys() {
+    public Iterator<String> keys() {
         return this.map.keySet().iterator();
     }
 
@@ -1119,6 +1132,21 @@ public class JSONObject {
         } else {
             remove(key);
         }
+        return this;
+    }
+
+
+    /**
+     * Put a null value for key in the JSONObject.
+     * @param key   A key string.
+     * @return this.
+     * @throws JSONException if the key is null.
+     */
+    public JSONObject putNull(String key) throws JSONException {
+        if (key == null) {
+            throw new JSONException("Null key.");
+        }
+        this.map.put(key, null);
         return this;
     }
 

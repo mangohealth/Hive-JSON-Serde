@@ -1,10 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-	<groupId>org.openx.data</groupId>
-	<artifactId>json-serde-parent</artifactId>
-	<relativePath>../pom.xml</relativePath>
-	<version>1.3.8-MANGO</version>
+        <groupId>org.openx.data</groupId>
+        <artifactId>json-serde-parent</artifactId>
+        <relativePath>../pom.xml</relativePath>
+        <version>1.3.9-MANGO</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -97,34 +97,22 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
+                <groupId>se.bjurr.gitchangelog</groupId>
+                <artifactId>git-changelog-maven-plugin</artifactId>
+                <version>1.43</version>
                 <executions>
                     <execution>
-                        <id>default-compile</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>default-testCompile</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>compile</id>
-                        <phase>compile</phase>
+                        <id>GenerateGitChangelog</id>
+                        <phase>generate-sources</phase>
                         <goals>
-                            <goal>compile</goal>
+                            <goal>git-changelog</goal>
                         </goals>
-                    </execution>
-                    <execution>
-                        <id>testCompile</id>
-                        <phase>test-compile</phase>
-                        <goals>
-                            <goal>testCompile</goal>
-                        </goals>
+                        <configuration>
+                            <filePath>target/CHANGELOG.md</filePath>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 
@@ -159,7 +147,7 @@
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
+            <artifactId>${hadoop.dependency}</artifactId>
             <version>${cdh.hadoop.version}</version>
             <scope>provided</scope>
         </dependency>

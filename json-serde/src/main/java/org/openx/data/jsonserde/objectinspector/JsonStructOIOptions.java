@@ -35,7 +35,7 @@ public  class JsonStructOIOptions {
             mappings = mp;
             this.jsonKeyReplacements = jsonKeyReplacements;
         }
-
+        boolean caseInsensitive = true; // converts JSON keys to case sensitive
         boolean dotsInKeyNames = false;
         String unmappedValuesFieldName = null;
 
@@ -54,6 +54,8 @@ public  class JsonStructOIOptions {
      public void setDotsInKeyNames(boolean dotsInKeyNames) {
          this.dotsInKeyNames = dotsInKeyNames;
      }
+     public void setCaseInsensitive(boolean c) { this.caseInsensitive = c; }
+     public boolean isCaseInsensitive() { return this.caseInsensitive; }
 
      public void setUnmappedValuesFieldName(String unmappedValuesFieldName) {
          this.unmappedValuesFieldName = unmappedValuesFieldName;

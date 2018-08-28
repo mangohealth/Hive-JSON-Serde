@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.*;
@@ -40,19 +41,24 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspecto
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.LongObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.ShortObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.TimestampObjectInspector;
+
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.io.Text;
 import org.openx.data.jsonserde.json.JSONArray;
 import org.openx.data.jsonserde.json.JSONException;
 import org.openx.data.jsonserde.json.JSONObject;
 import org.openx.data.jsonserde.json.ReplaceNode;
+import org.openx.data.jsonserde.json.JSONOptions;
 import org.openx.data.jsonserde.objectinspector.JsonObjectInspectorFactory;
 import org.openx.data.jsonserde.objectinspector.JsonStructOIOptions;
 
 import javax.print.attribute.standard.DateTimeAtCompleted;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
+import org.openx.data.jsonserde.objectinspector.primitive.JavaStringTimestampObjectInspector;
+import org.openx.data.jsonserde.objectinspector.primitive.ParsePrimitiveUtils;
 
 /**
  * Properties:
@@ -76,6 +82,7 @@ public class JsonSerDe extends AbstractSerDe {
 
     // if set, will ignore malformed JSON in deserialization
     boolean ignoreMalformedJson = false;
+    boolean explicitNull = false;
 
     // properties used in configuration
     public static final String PROP_IGNORE_MALFORMED_JSON = "ignore.malformed.json";
@@ -85,6 +92,8 @@ public class JsonSerDe extends AbstractSerDe {
     public static final String PROP_ALLOW_DUPLICATE_KEYS = "allow.duplicate.json.keys";
 
     public static final String PROP_DOTS_IN_KEYS = "dots.in.keys";
+    public static final String PROP_CASE_INSENSITIVE ="case.insensitive" ;
+    public static final String PROP_EXPLICIT_NULL ="explicit.null" ;
 
     // Allow table schema to define an extra MAP<STRING, STRING> column to dump all other base level keys into that
     // aren't otherwise defined in the schema
@@ -108,8 +117,8 @@ public class JsonSerDe extends AbstractSerDe {
     public void initialize(Configuration conf, Properties tbl) throws SerDeException {
         LOG.debug("Initializing SerDe");
         // Get column names and sort order
-        String columnNameProperty = tbl.getProperty(Constants.LIST_COLUMNS);
-        String columnTypeProperty = tbl.getProperty(Constants.LIST_COLUMN_TYPES);
+        String columnNameProperty = tbl.getProperty(serdeConstants.LIST_COLUMNS);
+        String columnTypeProperty = tbl.getProperty(serdeConstants.LIST_COLUMN_TYPES);
         
         LOG.debug("columns " + columnNameProperty + " types " + columnTypeProperty);
 
@@ -135,11 +144,12 @@ public class JsonSerDe extends AbstractSerDe {
                 .getStructTypeInfo(columnNames, columnTypes);
         
         // build options
-        options = 
-                new JsonStructOIOptions(getMappings(tbl), getKeyReplacements(tbl));
+        boolean isCaseInsensitive = Boolean.parseBoolean(tbl.getProperty(PROP_CASE_INSENSITIVE, "true"));
+        options = new JsonStructOIOptions(getMappings(tbl, isCaseInsensitive), getKeyReplacements(tbl));
+        options.setCaseInsensitive(isCaseInsensitive);
 
         // Get the sort order
-        String columnSortOrder = tbl.getProperty(Constants.SERIALIZATION_SORT_ORDER);
+        String columnSortOrder = tbl.getProperty(serdeConstants.SERIALIZATION_SORT_ORDER);
         columnSortOrderIsDesc = new boolean[columnNames.size()];
         for (int i = 0; i < columnSortOrderIsDesc.length; i++) {
             columnSortOrderIsDesc[i] = columnSortOrder != null && 
@@ -148,6 +158,8 @@ public class JsonSerDe extends AbstractSerDe {
 
         // dots in key names. Substitute with underscores
         options.setDotsInKeyNames(Boolean.parseBoolean(tbl.getProperty(PROP_DOTS_IN_KEYS,"false")));
+
+        JSONOptions.globalOptions = new JSONOptions().setCaseInsensitive(options.isCaseInsensitive());
 
         rowObjectInspector = (StructObjectInspector) JsonObjectInspectorFactory
                 .getJsonObjectInspectorFromTypeInfo(rowTypeInfo, options);
@@ -163,6 +175,8 @@ public class JsonSerDe extends AbstractSerDe {
 
         options.setPrefixMappings(getPrefixMappings(tbl));
         
+        explicitNull = Boolean.parseBoolean(tbl
+                .getProperty(PROP_EXPLICIT_NULL, "false"));
     }
 
     /**
@@ -277,20 +291,22 @@ public class JsonSerDe extends AbstractSerDe {
             StructField sf = fields.get(i);
             Object data = soi.getStructFieldData(obj, sf);
 
-            if (null != data) {
-                try {
-                    // we want to serialize columns with their proper HIVE name,
-                    // not the _col2 kind of name usually generated upstream
-                    result.put(
-                            getSerializedFieldName(columnNames, i, sf), 
-                            serializeField(
-                                data,
-                                sf.getFieldObjectInspector()));
-                    
-                } catch (JSONException ex) {
-                   LOG.warn("Problem serializing", ex);
-                   throw new RuntimeException(ex);
+            try {
+                if (null != data) {
+
+                        // we want to serialize columns with their proper HIVE name,
+                        // not the _col2 kind of name usually generated upstream
+                        result.put(
+                                getSerializedFieldName(columnNames, i, sf),
+                                serializeField(
+                                    data,
+                                    sf.getFieldObjectInspector()));
+                } else if(explicitNull) {
+                    result.putNull(getSerializedFieldName(columnNames, i, sf));
                 }
+            } catch (JSONException ex) {
+                LOG.warn("Problem serializing", ex);
+                throw new RuntimeException(ex);
             }
         }
         return result;
@@ -341,6 +357,9 @@ public class JsonSerDe extends AbstractSerDe {
                         break;
                     case STRING:
                         result = ((StringObjectInspector)poi).getPrimitiveJavaObject(obj);
+                        break;
+                    case TIMESTAMP:
+                        result = ParsePrimitiveUtils.serializeAsUTC(((TimestampObjectInspector)poi).getPrimitiveJavaObject(obj));
                         break;
                     case UNKNOWN:
                         throw new RuntimeException("Unknown primitive");
@@ -452,7 +471,7 @@ public class JsonSerDe extends AbstractSerDe {
      * @param tbl
      * @return 
      */
-    private Map<String, String> getMappings(Properties tbl) {
+    private Map<String, String> getMappings(Properties tbl, boolean isCaseInsensitive) {
         int n = PFX.length();
         Map<String,String> mps = new HashMap<String,String>();
         
@@ -461,7 +480,8 @@ public class JsonSerDe extends AbstractSerDe {
             String s = (String) o;
             
             if(s.startsWith(PFX) ) {
-                mps.put(s.substring(n), tbl.getProperty(s).toLowerCase());
+                String fieldTo = tbl.getProperty(s);
+                mps.put(s.substring(n), (isCaseInsensitive ? fieldTo.toLowerCase(): fieldTo));
             }
         }
         return mps;

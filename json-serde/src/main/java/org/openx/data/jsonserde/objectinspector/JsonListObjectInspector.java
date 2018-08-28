@@ -24,7 +24,6 @@ import org.openx.data.jsonserde.json.JSONException;
 import org.openx.data.jsonserde.json.JSONObject;
 
 /**
- *
  * @author rcongiu
  */
 public class JsonListObjectInspector extends StandardListObjectInspector {
@@ -35,50 +34,53 @@ public class JsonListObjectInspector extends StandardListObjectInspector {
         super(listElementObjectInspector);
     }
 
-     @Override
-  public List<?> getList(Object data) {
-    if (data == null || JSONObject.NULL.equals(data)) {
-      return null;
+    @Override
+    public List<?> getList(Object data) {
+        if (data == null || JSONObject.NULL.equals(data)) {
+            return null;
+        }
+        JSONArray array = getJSONArray(data);
+        if(array==null) return null;
+
+        List<Object> al = new ArrayList<Object>(array.length());
+        for (int i = 0; i < array.length(); i++) {
+            al.add(getListElement(data, i));
+        }
+        return al;
     }
 
-    JSONArray array = safetyCheck(data);
-    List al = new ArrayList(array.length());
-    for(int i =0; i< array.length(); i++) {
-	al.add(getListElement(data,i));
-    }
-    return al;
-  }
+    @Override
+    public Object getListElement(Object data, int index) {
+        if (data == null) {
+            return null;
+        }
+        JSONArray array = getJSONArray(data);
+        if(array==null) return null;
 
-  @Override
-  public Object getListElement(Object data, int index) {
-    if (data == null) {
-      return null;
+        try {
+            Object obj = array.get(index);
+            if (JSONObject.NULL == obj) {
+                return null;
+            } else {
+                return obj;
+            }
+        } catch (JSONException ex) {
+            return null;
+        }
     }
+    
+    @Override
+    public int getListLength(Object data) {
+        if (data == null) {
+            return -1;
+        }
+        JSONArray array = getJSONArray(data);
+        if(array == null) return -1;
 
-    JSONArray array = safetyCheck(data);
-    try {
-        Object obj =  array.get(index);
-	if(JSONObject.NULL == obj) {
-	    return null;
-	} else {
-	    return obj;
-	}
-    } catch(JSONException ex) {
-        return null;
-    }
-  }
-
-  @Override
-  public int getListLength(Object data) {
-    if (data == null) {
-      return -1;
+        return array.length();
     }
 
-    JSONArray array = safetyCheck(data);
-    return array.length();
-  }
-
-  private JSONArray safetyCheck(Object data) {
+  private JSONArray getJSONArray(Object data) {
     if(!(data instanceof JSONArray)) {
       // Allow empty objects to get translated as empty lists if that's what we expected.
       // Do this because when we fail to parse some JSON, it'll default to {} which will otherwise
@@ -108,5 +110,4 @@ public class JsonListObjectInspector extends StandardListObjectInspector {
     return (JSONArray) data;
   }
 
-    
 }
