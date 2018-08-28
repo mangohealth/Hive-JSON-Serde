@@ -67,7 +67,8 @@ public class JsonArrayTest {
             ListObjectInspector loi = (ListObjectInspector) sfr.getFieldObjectInspector();
             Object val = soi.getStructFieldData(result, sfr);
 
-            assertEquals(-1, loi.getListLength(val));
+            // Mango change!  We *will* expect the scalar value to *always* get wrapped
+            assertEquals(1, loi.getListLength(val));
         }
 
     }
